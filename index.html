@@ -1,20 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SVG.js</title>
+  <title>Boats</title>
   <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.js"></script>
 </head>
 <body>
-Hello
 </body>
   
 <script type="text/javascript">
 
-// initialize SVG.js
-var draw = SVG().addTo('body')
+SVG.Boat= class extends SVG.G {
+  constructor(color, x, y, angle) {
+    super(x, y);
+    var group = draw.group()
+    var hull = group.path("M 50,10 C 70,30 70,70 70,90 L 30,90 C 30,70 30,30 50,10").rotate(angle, 50, 40).translate(x, y);
+    hull.stroke({color: 'black', width: 3, linecap: 'round', linejoin: 'round'});
+    hull.fill(color);
+    var sail = group.path("M 50,40 L 80,50 L 60,85 Z").rotate(angle, 50, 40).translate(x, y);
+    sail.fill({color: 'lightgray', opacity: 0.75});
+    sail.stroke({color: 'black', width: 1});
+  }
+}
 
-// draw pink square
-draw.rect(100, 100).move(100, 50).fill('#f06')
+SVG.extend(SVG.Container,  {
+  boat: function(color, x, y, angle) {
+    return this.put(new SVG.Boat(color, x, y, angle))
+  }
+})
+
+var draw = SVG().addTo('body').size(300, 300);
+
+draw.boat('lightblue', 100, 100, 45)
+draw.boat('lightgreen', 200, 120, -45)
 
 </script>
 </html>
