@@ -10,18 +10,34 @@
 <script type="text/javascript">
 
 SVG.Boat= class extends SVG.G {
-  constructor(color, x, y, angle) {
+  constructor(color, x, y, deg) {
     super(x, y);
     var group = this.group()
     var hull = group.path(
-	    `M ${x},${y} C ${x + 20},${y + 20} ${x + 20},${y + 60} ${x + 20},${y + 80} ` +
-	    `L ${x - 20},${y + 80} C ${x - 20},${y + 60} ${x -20},${y + 20} ${x},${y}`);
+	    `M ${x},${y - 40} C ${x + 20},${y - 20} ${x + 20},${y + 20} ${x + 20},${y + 40} ` +
+	    `L ${x - 20},${y + 40} C ${x - 20},${y + 30} ${x -20},${y - 20} ${x},${y - 40}`);
     hull.stroke({color: 'black', width: 3, linecap: 'round', linejoin: 'round'});
     hull.fill(color);
-    var sail = group.path(`M ${x},${y + 40} L ${x + 30},${y + 50} L ${x + 10},${y + 85} Z`);
+    var sail = group.path(`M ${x},${y} L ${x + 30},${y + 10} L ${x + 10},${y + 45} Z`);
     sail.fill({color: 'lightgray', opacity: 0.75});
     sail.stroke({color: 'black', width: 1});
-    group.rotate(angle, x, y + 40);
+    this._boat = group;
+    this._heading = 0;
+    this.heading(deg);
+  }
+
+  heading(deg) {
+    this._boat.rotate(deg - this._heading);
+    this._heading = deg;
+  }
+
+  center(x,y) {
+    var ox = this.x();
+    var oy = this.y();
+    var rv = super.center(x, y);
+    var angle = Math.atan2(rv.x() - ox, -(rv.y() - oy)) * 180.0 / Math.PI;
+    this.heading(angle, this.cx(), this.cy());
+    return rv;
   }
 }
 
@@ -31,21 +47,21 @@ SVG.extend(SVG.Container,  {
   }
 })
 
-var draw = SVG().addTo('body').size(600, 300);
+var draw = SVG().addTo('body').size(800, 600);
 
 var boat1 = draw.boat('lightblue', 100, 100, 90);
 var boat2 = draw.boat('lightgreen', 200, 120, 110);
 
-var boata = draw.boat('red', 100, 200, 0);
-var boatb = draw.boat('red', 200, 200, 45);
-var boatc = draw.boat('red', 300, 200, 90);
-var boatd = draw.boat('red', 400, 200, 180);
+var boata = draw.boat('red', 100, 300, 0);
+var boatb = draw.boat('red', 200, 300, 45);
+var boatc = draw.boat('red', 300, 300, 90);
+var boatd = draw.boat('red', 400, 300, 180);
 
-var course1 = draw.path("m 0,200 C 0,0 100,300 300,100");
-course1.fill('none').stroke({width:2, color: 'blue'})
+var course1 = draw.path("m 50,200 C 0,0 100,300 300,100");
+course1.fill('none').stroke({width:1, color: 'blue'})
 
-var course2 = draw.path("m 0,0 C 50,50 200,200 300,200");
-course2.fill('none').stroke({width:2, color: 'green'})
+var course2 = draw.path("m 0,0 C 50,50 200,200 300,30");
+course2.fill('none').stroke({width:1, color: 'green'})
 
 draw.animate(8000, '<>').during(function( eased){
     var p = course1.pointAt(eased * course1.length());
