@@ -10,34 +10,30 @@
 <script type="text/javascript">
 
 SVG.Boat= class extends SVG.G {
-  constructor(color, x, y, deg) {
+  constructor(color, x, y, angle) {
     super(x, y);
     var group = this.group()
-    var hull = group.path(
-	    `M ${x},${y - 40} C ${x + 20},${y - 20} ${x + 20},${y + 20} ${x + 20},${y + 40} ` +
-	    `L ${x - 20},${y + 40} C ${x - 20},${y + 30} ${x -20},${y - 20} ${x},${y - 40}`);
-    hull.stroke({color: 'black', width: 3, linecap: 'round', linejoin: 'round'});
-    hull.fill(color);
-    var sail = group.path(`M ${x},${y} L ${x + 30},${y + 10} L ${x + 10},${y + 45} Z`);
-    sail.fill({color: 'lightgray', opacity: 0.75});
-    sail.stroke({color: 'black', width: 1});
+    this._hull = group.path("M 0,-40 C 20,-20 20,20 20,40 L -20,40 C -20,30 -20,-20 0,-40")
+        .stroke({color: 'black', width: 3, linecap: 'round', linejoin: 'round'})
+        .fill(color);
+    this._sail = group.path("M 0,0 L 30,10 L 10,45 Z")
+        .fill({color: 'lightgray', opacity: 0.75})
+        .stroke({color: 'black', width: 1});
     this._boat = group;
     this._heading = 0;
-    this.heading(deg);
-  }
-
-  heading(deg) {
-    this._boat.rotate(deg - this._heading);
-    this._heading = deg;
+    this._x = x;
+    this._y = y;
+    this._hull.transform({rotate:angle, translateX: x, translateY: y}, false);
+    this._sail.transform({rotate:angle, translateX: x, translateY: y, ox: 0, oy: 0}, false);
+    console.log('cx cy ', this.cx(), this.cy());
   }
 
   center(x,y) {
-    var ox = this.x();
-    var oy = this.y();
-    var rv = super.center(x, y);
-    var angle = Math.atan2(rv.x() - ox, -(rv.y() - oy)) * 180.0 / Math.PI;
-    this.heading(angle, this.cx(), this.cy());
-    return rv;
+    var angle = Math.atan2(y - this._y, x - this._x) * 180.0 / Math.PI + 90;
+    this._hull.transform({rotate:angle, translateX: x, translateY: y}, false);
+    this._sail.transform({rotate:angle, translateX: x, translateY: y, ox: 0, oy: 0}, false);
+    this._x = x;
+    this._y = y;
   }
 }
 
