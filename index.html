@@ -16,7 +16,7 @@ SVG.Boat= class extends SVG.G {
     this._hull = group.path("M 0,-40 C 20,-20 20,20 20,40 L -20,40 C -20,30 -20,-20 0,-40")
         .stroke({color: 'black', width: 3, linecap: 'round', linejoin: 'round'})
         .fill(color);
-    this._sail = group.path("M 0,0 L 30,10 L 10,45 Z")
+    this._sail = group.path("M 0,0 Q 20,-20 40,0 Q 20,-5 0,0")
         .fill({color: 'lightgray', opacity: 0.75})
         .stroke({color: 'black', width: 1});
     this._boat = group;
