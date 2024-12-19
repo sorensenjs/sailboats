@@ -43,20 +43,21 @@ SVG.extend(SVG.Container,  {
   }
 })
 
-var draw = SVG().addTo('body').size(800, 600);
+var draw = SVG().addTo('body').size(1200, 1200);
+var course = draw.circle(1200, 1200).fill('white').stroke({width:2, color:'black'});
 
 var boat1 = draw.boat('lightblue', 100, 100, 90);
 var boat2 = draw.boat('lightgreen', 200, 120, 110);
 
-var boata = draw.boat('red', 100, 300, 0);
-var boatb = draw.boat('red', 200, 300, 45);
-var boatc = draw.boat('red', 300, 300, 90);
-var boatd = draw.boat('red', 400, 300, 180);
+var boata = draw.boat('red', 100, 600, 0);
+var boatb = draw.boat('red', 200, 600, 45);
+var boatc = draw.boat('red', 300, 600, 90);
+var boatd = draw.boat('red', 400, 600, 180);
 
-var course1 = draw.path("m 50,200 C 0,0 100,300 300,100");
+var course1 = draw.path("m 250,500 C 150,500 200,500 400,200");
 course1.fill('none').stroke({width:1, color: 'blue'})
 
-var course2 = draw.path("m 0,0 C 50,50 200,200 300,30");
+var course2 = draw.path("m 300,180 C 350,150 500,200 600,330");
 course2.fill('none').stroke({width:1, color: 'green'})
 
 draw.animate(8000, '<>').during(function( eased){
