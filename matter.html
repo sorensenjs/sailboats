@@ -15,23 +15,38 @@ var Engine = Matter.Engine,
     Bodies = Matter.Bodies,
     Composite = Matter.Composite;
 
+const vertices = [
+    {x: -15.9, y: 34.8}, {x: -13.4, y: 25.1}, {x: -10.0, y: 15.7}, {x: -5.4, y: 6.8},
+    {x: 0, y: 0}, {x: 6.2, y: 7.8}, {x: 10.9, y: 16.6}, {x: 14.3, y: 26.0},
+    {x: 16.7, y: 35.7}, {x: 18.3, y: 45.6}, {x: 19.3, y: 55.5}, {x: 19.8, y: 65.5},
+    {x: 20.0, y: 75.5}, {x: 20, y: 80}, {x: -20, y: 80}, {x: -20.0, y: 74.5},
+    {x: -19.6, y: 64.5}, {x: -18.8, y: 54.5}, {x: -17.6, y: 44.6}
+];
+
 // create an engine
 var engine = Engine.create();
 
 // create a renderer
 var render = Render.create({
     element: document.body,
-    engine: engine
+    engine: engine,
+    options: { wireframes: false }
 });
 
-// create two boxes and a ground
-var boxA = Bodies.rectangle(400, 200, 80, 80);
-var boxB = Bodies.rectangle(450, 50, 80, 80);
-var circle = Bodies.circle(400, 300, 20);
+var boats = [
+    Matter.Bodies.fromVertices(100, 0, vertices, {render: {fillStyle: 'lightblue'}}),
+    Matter.Bodies.fromVertices(150, 0, vertices), 
+    Matter.Bodies.fromVertices(200, 0, vertices), 
+    Matter.Bodies.fromVertices(220, 0, vertices), 
+    Matter.Bodies.fromVertices(300, 0, vertices), 
+    Matter.Bodies.fromVertices(350, 0, vertices), 
+];
+var circle = Bodies.circle(232, 300, 10);
 var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
 
 // add all of the bodies to the world
-Composite.add(engine.world, [boxA, boxB, circle, ground]);
+Composite.add(engine.world, [circle, ground]);
+Composite.add(engine.world, boats);
 
 // run the renderer
 Render.run(render);
