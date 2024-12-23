@@ -19,26 +19,20 @@ var Engine = Matter.Engine,
 function containerPolygon(x, y, sides, radius) {
   const width = 20;
   const extraLength = 1.15;
-  const initialRotation = 0;
 
   const theta = 2 * Math.PI / sides;
   const sideLength = 2 * radius * theta/2 * extraLength;
 
   const parts = [];
   for (let i = 0; i < sides; i++) {
-    // We'll build thin sides and then translate + rotate them appropriately.
     const body = Bodies.rectangle(0, 0, sideLength, width, { isStatic: true });
     Body.rotate(body, i * theta);
     Body.translate(body, {x: radius * Math.sin(i * theta), y: -radius * Math.cos(i * theta)});
     parts.push(body);
   }
-  const ret = Body.create();
+  const ret = Body.create({ isStatic: true });
   Body.setParts(ret, parts);
-  if (initialRotation) {
-    Body.rotate(ret, initialRotation);
-  }
   Body.translate(ret, {x: x, y: y});
-
   return ret;
 }
 
@@ -55,26 +49,36 @@ var engine = Engine.create({ gravity: { y: 0 }});
 var render = Render.create({
     element: document.body,
     engine: engine,
-    options: { wireframes: false }
+    options: { 
+        width: 3000,
+        height: 3000,
+        wireframes: false,
+	hasBounds: true,
+    }
 });
 
-var field = containerPolygon(400, 345, 40, 280);
+var field = containerPolygon(1020, 1020, 40, 1000);
 
 var boats = [
-    Matter.Bodies.fromVertices(400, 180, vertices),
-    Matter.Bodies.fromVertices(580, 500, vertices), 
-    Matter.Bodies.fromVertices(200, 300, vertices), 
-    Matter.Bodies.fromVertices(220, 310, vertices), 
-    Matter.Bodies.fromVertices(300, 320, vertices), 
-    Matter.Bodies.fromVertices(350, 330, vertices), 
+    Matter.Bodies.fromVertices(1400, 1180, vertices),
+    Matter.Bodies.fromVertices(1580, 1500, vertices), 
+    Matter.Bodies.fromVertices(1200, 1300, vertices), 
+    Matter.Bodies.fromVertices(1220, 1310, vertices), 
+    Matter.Bodies.fromVertices(1300, 1320, vertices), 
+    Matter.Bodies.fromVertices(1350, 1330, vertices), 
 ];
-Matter.Body.setVelocity(boats[0], {x: 0.1, y: 0.5});
+Matter.Body.setVelocity(boats[0], {x: 5, y: 2});
 Matter.Body.setAngularVelocity(boats[0], Math.PI/20);
-var circle = Bodies.circle(232, 300, 10);
-var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+var circle = Bodies.circle(1232, 1800, 10);
 
-Composite.add(engine.world, [field, circle, ground]);
+Composite.add(engine.world, [field, circle]);
 Composite.add(engine.world, boats);
+
+console.log(render.options);
+Render.lookAt(render, {
+    min: { x: 0, y: 0 },
+    max: { x: 8000, y: 8000 }
+});
 
 Render.run(render);
 
