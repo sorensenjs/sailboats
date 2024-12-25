@@ -14,35 +14,65 @@ var Engine = Matter.Engine,
     Runner = Matter.Runner,
     Bodies = Matter.Bodies,
     Body = Matter.Body,
-    Composite = Matter.Composite;
+    Composite = Matter.Composite,
+    Constraint = Matter.Constraint;
 
 function containerPolygon(x, y, sides, radius) {
-  const width = 20;
-  const extraLength = 1.15;
-
-  const theta = 2 * Math.PI / sides;
-  const sideLength = 2 * radius * theta/2 * extraLength;
-
-  const parts = [];
-  for (let i = 0; i < sides; i++) {
-    const body = Bodies.rectangle(0, 0, sideLength, width, { isStatic: true });
-    Body.rotate(body, i * theta);
-    Body.translate(body, {x: radius * Math.sin(i * theta), y: -radius * Math.cos(i * theta)});
-    parts.push(body);
-  }
-  const ret = Body.create({ isStatic: true });
-  Body.setParts(ret, parts);
-  Body.translate(ret, {x: x, y: y});
-  return ret;
+    const width = 20;
+    const extraLength = 1.15;
+    const theta = 2 * Math.PI / sides;
+    const sideLength = 2 * radius * theta/2 * extraLength;
+    const parts = [];
+    for (let i = 0; i < sides; i++) {
+        const body = Bodies.rectangle(0, 0, sideLength, width, { isStatic: true });
+        Body.rotate(body, i * theta);
+        Body.translate(body, {
+            x: radius * Math.sin(i * theta),
+	    y: -radius * Math.cos(i * theta)
+	});
+        parts.push(body);
+    }
+    const ret = Body.create({ isStatic: true });
+    Body.setParts(ret, parts);
+    Body.translate(ret, {x: x, y: y});
+    return ret;
 }
 
-const vertices = [
-    {x: -15.9, y: 34.8}, {x: -13.4, y: 25.1}, {x: -10.0, y: 15.7}, {x: -5.4, y: 6.8},
-    {x: 0, y: 0}, {x: 6.2, y: 7.8}, {x: 10.9, y: 16.6}, {x: 14.3, y: 26.0},
-    {x: 16.7, y: 35.7}, {x: 18.3, y: 45.6}, {x: 19.3, y: 55.5}, {x: 19.8, y: 65.5},
-    {x: 20.0, y: 75.5}, {x: 20, y: 80}, {x: -20, y: 80}, {x: -20.0, y: 74.5},
-    {x: -19.6, y: 64.5}, {x: -18.8, y: 54.5}, {x: -17.6, y: 44.6}
-];
+var boat_group = -1;
+
+function addBoat(world, x, y) {
+    const vertices = [
+        {x: -15.9, y: 34.8}, {x: -13.4, y: 25.1}, {x: -10.0, y: 15.7}, {x: -5.4, y: 6.8},
+        {x: 0, y: 0}, {x: 6.2, y: 7.8}, {x: 10.9, y: 16.6}, {x: 14.3, y: 26.0},
+        {x: 16.7, y: 35.7}, {x: 18.3, y: 45.6}, {x: 19.3, y: 55.5}, {x: 19.8, y: 65.5},
+        {x: 20.0, y: 75.5}, {x: 20, y: 80}, {x: -20, y: 80}, {x: -20.0, y: 74.5},
+        {x: -19.6, y: 64.5}, {x: -18.8, y: 54.5}, {x: -17.6, y: 44.6}
+    ];
+    var boom_length = 70;
+    var boat = Matter.Bodies.fromVertices(x, y, vertices,
+            { collisionFilter: { group: boat_group }});
+    var boom = Matter.Bodies.rectangle(x, y, boom_length, 10, {
+        collisionFilter: { group: boat_group },
+        frictionAir: 0,
+	render: {
+	  fillStyle: 'lightgrey'
+	}
+    });
+    Composite.add(engine.world, [boat, boom]);
+    Composite.add(world, Constraint.create({ 
+        bodyA: boat,
+        bodyB: boom,
+        pointA: { x: 0, y: -20 },
+        pointB: { x: boom_length/2, y: 0 },
+        stiffness: 0.9,
+        length: 0,
+        render: {
+            strokeStyle: 'black'
+        }
+    }));
+    boat_group--;
+    return boat;
+}
 
 var engine = Engine.create({ gravity: { y: 0 }});
 
@@ -59,22 +89,18 @@ var render = Render.create({
 
 var field = containerPolygon(1020, 1020, 40, 1000);
 
-var boats = [
-    Matter.Bodies.fromVertices(1400, 1180, vertices),
-    Matter.Bodies.fromVertices(1580, 1500, vertices), 
-    Matter.Bodies.fromVertices(1200, 1300, vertices), 
-    Matter.Bodies.fromVertices(1220, 1310, vertices), 
-    Matter.Bodies.fromVertices(1300, 1320, vertices), 
-    Matter.Bodies.fromVertices(1350, 1330, vertices), 
-];
-Matter.Body.setVelocity(boats[0], {x: 5, y: 2});
-Matter.Body.setAngularVelocity(boats[0], Math.PI/20);
+boat = addBoat(engine.world, 1400, 1180);
+addBoat(engine.world, 1580, 1500);
+addBoat(engine.world, 1200, 1300);
+addBoat(engine.world, 1220, 1310);
+addBoat(engine.world, 1300, 1320);
+addBoat(engine.world, 1350, 1330);
+Matter.Body.setVelocity(boat, {x: 5, y: 2});
+Matter.Body.setAngularVelocity(boat, Math.PI/20);
 var circle = Bodies.circle(1232, 1800, 10);
 
 Composite.add(engine.world, [field, circle]);
-Composite.add(engine.world, boats);
 
-console.log(render.options);
 Render.lookAt(render, {
     min: { x: 0, y: 0 },
     max: { x: 8000, y: 8000 }
