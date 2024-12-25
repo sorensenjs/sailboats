@@ -51,7 +51,7 @@ function addBoat(world, x, y) {
     var boom_length = 70;
     var boat = Matter.Bodies.fromVertices(x, y, vertices,
             { collisionFilter: { group: boat_group }});
-    var boom = Matter.Bodies.rectangle(x, y, boom_length, 10, {
+    var boom = Matter.Bodies.rectangle(x, y, 6, boom_length, {
         collisionFilter: { group: boat_group },
         frictionAir: 0,
 	render: {
@@ -63,11 +63,23 @@ function addBoat(world, x, y) {
         bodyA: boat,
         bodyB: boom,
         pointA: { x: 0, y: -20 },
-        pointB: { x: boom_length/2, y: 0 },
+        pointB: { x: 0, y: -boom_length/2 },
         stiffness: 0.9,
         length: 0,
         render: {
-            strokeStyle: 'black'
+	    visible: false
+        }
+    }));
+    Composite.add(world, Constraint.create({
+        bodyA: boat,
+        bodyB: boom,
+        pointA: { x: 0, y: 0 },
+        pointB: { x: 0, y: 0 },
+        stiffness: 0.01,
+        render: {
+            strokeStyle: 'white',
+	    anchors: false,
+	    type: 'line',
         }
     }));
     boat_group--;
