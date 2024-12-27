@@ -9,13 +9,14 @@
   
 <script type="text/javascript">
 
-var Engine = Matter.Engine,
-    Render = Matter.Render,
-    Runner = Matter.Runner,
-    Bodies = Matter.Bodies,
+var Bodies = Matter.Bodies,
     Body = Matter.Body,
     Composite = Matter.Composite,
-    Constraint = Matter.Constraint;
+    Constraint = Matter.Constraint,
+    Engine = Matter.Engine,
+    Events = Matter.Events,
+    Render = Matter.Render,
+    Runner = Matter.Runner;
 
 function containerPolygon(x, y, sides, radius) {
     const width = 20;
@@ -50,11 +51,11 @@ function createBoat(x, y) {
     ];
     var boom_length = 70;
     var hull = Matter.Bodies.fromVertices(x, y, vertices, {
-	collisionFilter: { group: boat_group }
+	collisionFilter: { group: boat_group }, label: "hull",
     });
     var boom = Matter.Bodies.rectangle(x, y, 6, boom_length, {
         collisionFilter: { group: boat_group }, frictionAir: 0,
-	render: { fillStyle: 'lightgrey' }
+	render: { fillStyle: 'lightgrey' }, label: "boom",
     });
     var mast = Constraint.create({ 
         bodyA: hull, bodyB: boom, pointA: { x: 0, y: -20 },
@@ -71,7 +72,7 @@ function createBoat(x, y) {
         }
     });
     boat_group--;
-    var craft = Composite.create();
+    var craft = Composite.create({ label: "boat" });
     Matter.Composite.add(craft, [hull, boom, mast, sheet]);
     return craft;
 }
@@ -107,6 +108,17 @@ Composite.add(engine.world, [field, circle]);
 Render.lookAt(render, {
     min: { x: 0, y: 0 },
     max: { x: 8000, y: 8000 }
+});
+
+Events.on(engine, 'beforeUpdate', function() {
+    var bodies = Composite.allBodies(engine.world);
+    for (var i = 0; i < bodies.length; i++) {
+        var body = bodies[i];
+        if (body.isStatic || body.isSleeping) continue;
+        if (body.label == 'boom') {
+          body.force.y += body.mass * 0.001;
+        }
+    }
 });
 
 Render.run(render);
