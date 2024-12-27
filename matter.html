@@ -40,7 +40,7 @@ function containerPolygon(x, y, sides, radius) {
 
 var boat_group = -1;
 
-function addBoat(world, x, y) {
+function createBoat(x, y) {
     const vertices = [
         {x: -15.9, y: 34.8}, {x: -13.4, y: 25.1}, {x: -10.0, y: 15.7}, {x: -5.4, y: 6.8},
         {x: 0, y: 0}, {x: 6.2, y: 7.8}, {x: 10.9, y: 16.6}, {x: 14.3, y: 26.0},
@@ -49,41 +49,31 @@ function addBoat(world, x, y) {
         {x: -19.6, y: 64.5}, {x: -18.8, y: 54.5}, {x: -17.6, y: 44.6}
     ];
     var boom_length = 70;
-    var boat = Matter.Bodies.fromVertices(x, y, vertices,
-            { collisionFilter: { group: boat_group }});
-    var boom = Matter.Bodies.rectangle(x, y, 6, boom_length, {
-        collisionFilter: { group: boat_group },
-        frictionAir: 0,
-	render: {
-	  fillStyle: 'lightgrey'
-	}
+    var hull = Matter.Bodies.fromVertices(x, y, vertices, {
+	collisionFilter: { group: boat_group }
     });
-    Composite.add(engine.world, [boat, boom]);
-    Composite.add(world, Constraint.create({ 
-        bodyA: boat,
-        bodyB: boom,
-        pointA: { x: 0, y: -20 },
-        pointB: { x: 0, y: -boom_length/2 },
-        stiffness: 0.9,
-        length: 0,
-        render: {
-	    visible: false
-        }
-    }));
-    Composite.add(world, Constraint.create({
-        bodyA: boat,
-        bodyB: boom,
-        pointA: { x: 0, y: 0 },
-        pointB: { x: 0, y: 0 },
-        stiffness: 0.01,
+    var boom = Matter.Bodies.rectangle(x, y, 6, boom_length, {
+        collisionFilter: { group: boat_group }, frictionAir: 0,
+	render: { fillStyle: 'lightgrey' }
+    });
+    var mast = Constraint.create({ 
+        bodyA: hull, bodyB: boom, pointA: { x: 0, y: -20 },
+	pointB: { x: 0, y: -boom_length/2 },
+        stiffness: 0.9, length: 0, render: { visible: false }
+    });
+    var sheet = Constraint.create({
+        bodyA: hull, bodyB: boom, pointA: { x: 0, y: 0 },
+        pointB: { x: 0, y: 0 }, stiffness: 0.01,
         render: {
             strokeStyle: 'white',
 	    anchors: false,
 	    type: 'line',
         }
-    }));
+    });
     boat_group--;
-    return boat;
+    var craft = Composite.create();
+    Matter.Composite.add(craft, [hull, boom, mast, sheet]);
+    return craft;
 }
 
 var engine = Engine.create({ gravity: { y: 0 }});
@@ -101,14 +91,15 @@ var render = Render.create({
 
 var field = containerPolygon(1020, 1020, 40, 1000);
 
-boat = addBoat(engine.world, 1400, 1180);
-addBoat(engine.world, 1580, 1500);
-addBoat(engine.world, 1200, 1300);
-addBoat(engine.world, 1220, 1310);
-addBoat(engine.world, 1300, 1320);
-addBoat(engine.world, 1350, 1330);
-Matter.Body.setVelocity(boat, {x: 5, y: 2});
-Matter.Body.setAngularVelocity(boat, Math.PI/20);
+var boatA = createBoat(1400, 1180);
+Composite.add(engine.world, boatA);
+Composite.add(engine.world, createBoat(1580, 1500));
+Composite.add(engine.world, createBoat(1200, 1300));
+Composite.add(engine.world, createBoat(1220, 1310));
+Composite.add(engine.world, createBoat(1300, 1320));
+Composite.add(engine.world, createBoat(1350, 1330));
+Matter.Body.setVelocity(boatA.bodies[0], {x: 5, y: 2});
+Matter.Body.setAngularVelocity(boatA.bodies[0], Math.PI/20);
 var circle = Bodies.circle(1232, 1800, 10);
 
 Composite.add(engine.world, [field, circle]);
