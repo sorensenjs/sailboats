@@ -18,6 +18,14 @@ var Bodies = Matter.Bodies,
     Render = Matter.Render,
     Runner = Matter.Runner;
 
+/***
+Returns the current wind velocity and direction at a location as a
+array of velocity, direction in degrees, where 0 is vertical from the north.
+*/
+function windVelocity(x, y) {
+  return [1.5, 0.0 / Math.PI];
+}
+
 function containerPolygon(x, y, sides, radius) {
     const width = 20;
     const extraLength = 1.15;
@@ -43,23 +51,23 @@ var boat_group = -1;
 
 function createBoat(x, y) {
     const vertices = [
-        {x: -15.9, y: 34.8}, {x: -13.4, y: 25.1}, {x: -10.0, y: 15.7}, {x: -5.4, y: 6.8},
-        {x: 0, y: 0}, {x: 6.2, y: 7.8}, {x: 10.9, y: 16.6}, {x: 14.3, y: 26.0},
-        {x: 16.7, y: 35.7}, {x: 18.3, y: 45.6}, {x: 19.3, y: 55.5}, {x: 19.8, y: 65.5},
-        {x: 20.0, y: 75.5}, {x: 20, y: 80}, {x: -20, y: 80}, {x: -20.0, y: 74.5},
-        {x: -19.6, y: 64.5}, {x: -18.8, y: 54.5}, {x: -17.6, y: 44.6}
+        {y: -15.9, x: 34.8}, {y: -13.4, x: 25.1}, {y: -10.0, x: 15.7}, {y: -5.4, x: 6.8},
+        {y: 0, x: 0}, {y: 6.2, x: 7.8}, {y: 10.9, x: 16.6}, {y: 14.3, x: 26.0},
+        {y: 16.7, x: 35.7}, {y: 18.3, x: 45.6}, {y: 19.3, x: 55.5}, {y: 19.8, x: 65.5},
+        {y: 20.0, x: 75.5}, {y: 20, x: 80}, {y: -20, x: 80}, {y: -20.0, x: 74.5},
+        {y: -19.6, x: 64.5}, {y: -18.8, x: 54.5}, {y: -17.6, x: 44.6}
     ];
     var boom_length = 70;
     var hull = Matter.Bodies.fromVertices(x, y, vertices, {
 	collisionFilter: { group: boat_group }, label: "hull",
     });
-    var boom = Matter.Bodies.rectangle(x, y, 6, boom_length, {
+    var boom = Matter.Bodies.rectangle(x, y, boom_length, 6, {
         collisionFilter: { group: boat_group }, frictionAir: 0,
 	render: { fillStyle: 'lightgrey' }, label: "boom",
     });
     var mast = Constraint.create({ 
-        bodyA: hull, bodyB: boom, pointA: { x: 0, y: -20 },
-	pointB: { x: 0, y: -boom_length/2 },
+        bodyA: hull, bodyB: boom, pointA: { x: -20, y: 0 },
+	pointB: { x: -boom_length/2, y: 0 },
         stiffness: 0.9, length: 0, render: { visible: false }
     });
     var sheet = Constraint.create({
@@ -92,15 +100,18 @@ var render = Render.create({
 
 var field = containerPolygon(1020, 1020, 40, 1000);
 
-var boatA = createBoat(1400, 1180);
-Composite.add(engine.world, boatA);
-Composite.add(engine.world, createBoat(1580, 1500));
-Composite.add(engine.world, createBoat(1200, 1300));
-Composite.add(engine.world, createBoat(1220, 1310));
-Composite.add(engine.world, createBoat(1300, 1320));
-Composite.add(engine.world, createBoat(1350, 1330));
-Matter.Body.setVelocity(boatA.bodies[0], {x: 5, y: 2});
-Matter.Body.setAngularVelocity(boatA.bodies[0], Math.PI/20);
+var boats = [
+  createBoat(1400, 1180),
+  createBoat(1580, 1500),
+  createBoat(1200, 1300),
+  createBoat(1220, 1310),
+  createBoat(1300, 1320),
+  createBoat(1350, 1330)
+];
+
+Composite.add(engine.world, boats);
+Matter.Body.setVelocity(boats[0].bodies[0], {x: 5, y: 2});
+Matter.Body.setAngularVelocity(boats[0].bodies[0], Math.PI/20);
 var circle = Bodies.circle(1232, 1800, 10);
 
 Composite.add(engine.world, [field, circle]);
@@ -116,7 +127,11 @@ Events.on(engine, 'beforeUpdate', function() {
         var body = bodies[i];
         if (body.isStatic || body.isSleeping) continue;
         if (body.label == 'boom') {
-          body.force.y += body.mass * 0.001;
+	  var [velocity, direction] = windVelocity(body.x, body.y);
+	  var angdiff = Math.abs(body.angle - direction);
+	  console.log('body ', i, ' direction', direction, ' angle ', body.angle, ' angdif ', angdiff, ' cos ', Math.cos(angdiff));
+          body.force.y += Math.cos(angdiff) * body.mass * 0.001;
+          body.force.x += -Math.sin(angdiff) * body.mass * 0.001;
         }
     }
 });
