@@ -218,12 +218,17 @@ Events.on(engine, 'beforeUpdate', function() {
     for (var i = 0; i < bodies.length; i++) {
         var body = bodies[i];
         if (body.isStatic || body.isSleeping) continue;
-        if (body.label == 'boom') {
+/*        if (body.label == 'boom') {
             var [velocity, direction] = windVelocity(body.x, body.y);
             var angdiff = Math.abs(body.angle - direction);
             console.log('body ', i, ' direction', direction, ' angle ', body.angle, ' angdif ', angdiff, ' cos ', Math.cos(angdiff));
-            body.force.y += Math.cos(angdiff) * body.mass * 0.001;
-            body.force.x += -Math.sin(angdiff) * body.mass * 0.001;
+            body.force.y -= Math.cos(angdiff) * body.mass * 0.001;
+            body.force.x += Math.sin(angdiff) * body.mass * 0.001;
+        } */
+        if (body.label == 'hull') {
+            body.force.y += Math.sin(body.angle) * body.mass * 0.0001;
+            body.force.x += Math.cos(body.angle) * body.mass * 0.0001;
+	    Body.setAngularVelocity(body, 0.005);
         }
     }
 });
