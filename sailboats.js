@@ -47,62 +47,62 @@ var boat_group = -1;
 
 function createBoat(x, y) {
     const vertices = [{
+        x: 80.0 - 34.8,
         y: -15.9,
-        x: 34.8
     }, {
+        x: 80.0 - 25.1,
         y: -13.4,
-        x: 25.1
     }, {
+        x: 80.0 - 15.7,
         y: -10.0,
-        x: 15.7
     }, {
+        x: 80.0 - 6.8,
         y: -5.4,
-        x: 6.8
     }, {
+        x: 80.0 - 0,
         y: 0,
-        x: 0
     }, {
+        x: 80.0 - 7.8,
         y: 6.2,
-        x: 7.8
     }, {
+        x: 80.0 - 16.6,
         y: 10.9,
-        x: 16.6
     }, {
+        x: 80.0 - 26.0,
         y: 14.3,
-        x: 26.0
     }, {
+        x: 80.0 - 35.7,
         y: 16.7,
-        x: 35.7
     }, {
+        x: 80.0 - 45.6,
         y: 18.3,
-        x: 45.6
     }, {
+        x: 80.0 - 55.5,
         y: 19.3,
-        x: 55.5
     }, {
+        x: 80.0 - 65.5,
         y: 19.8,
-        x: 65.5
     }, {
+        x: 80.0 - 75.5,
         y: 20.0,
-        x: 75.5
     }, {
+        x: 80.0 - 80.0,
         y: 20,
-        x: 80
     }, {
+        x: 80.0 - 80.0,
         y: -20,
-        x: 80
     }, {
+        x: 80.0 - 74.5,
         y: -20.0,
-        x: 74.5
     }, {
+        x: 80.0 - 64.5,
         y: -19.6,
-        x: 64.5
     }, {
+        x: 80.0 - 54.5,
         y: -18.8,
-        x: 54.5
     }, {
+        x: 80.0 - 44.6,
         y: -17.6,
-        x: 44.6
     }];
     var boom_length = 70;
     var hull = Matter.Bodies.fromVertices(x, y, vertices, {
@@ -125,11 +125,11 @@ function createBoat(x, y) {
         bodyA: hull,
         bodyB: boom,
         pointA: {
-            x: -20,
+            x: 20,
             y: 0
         },
         pointB: {
-            x: -boom_length / 2,
+            x: boom_length / 2,
             y: 0
         },
         stiffness: 0.9,
@@ -224,6 +224,20 @@ Events.on(engine, 'beforeUpdate', function() {
             console.log('body ', i, ' direction', direction, ' angle ', body.angle, ' angdif ', angdiff, ' cos ', Math.cos(angdiff));
             body.force.y += Math.cos(angdiff) * body.mass * 0.001;
             body.force.x += -Math.sin(angdiff) * body.mass * 0.001;
+        }
+    }
+});
+
+const slider = document.getElementById("angle");
+
+slider.addEventListener("input", function() {
+    var bodies = Composite.allBodies(engine.world);
+    for (var i = 0; i < bodies.length; i++) {
+        var body = bodies[i];
+        if (body.isStatic || body.isSleeping) continue;
+        if (body.label == 'boom') {
+	    Body.setAngle(body, this.value / 360.0 * 2 * Math.PI, false);
+            Body.setAngularVelocity(body, 0);
         }
     }
 });
