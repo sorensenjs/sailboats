@@ -218,20 +218,49 @@ Events.on(engine, 'beforeUpdate', function() {
     for (var i = 0; i < bodies.length; i++) {
         var body = bodies[i];
         if (body.isStatic || body.isSleeping) continue;
-/*        if (body.label == 'boom') {
+        if (body.label == 'boom') {
             var [velocity, direction] = windVelocity(body.x, body.y);
-            var angdiff = Math.abs(body.angle - direction);
-            console.log('body ', i, ' direction', direction, ' angle ', body.angle, ' angdif ', angdiff, ' cos ', Math.cos(angdiff));
-            body.force.y -= Math.cos(angdiff) * body.mass * 0.001;
-            body.force.x += Math.sin(angdiff) * body.mass * 0.001;
-        } */
+            var angdiff = body.angle - direction;
+//            console.log('body ', i, ' direction', direction, ' angle ', body.angle, ' angdif ', angdiff, ' cos ', Math.cos(angdiff));
+            body.force.y += Math.sin(angdiff) * body.mass * 0.001;
+            body.force.x += Math.cos(angdiff) * body.mass * 0.001;
+        }
         if (body.label == 'hull') {
             body.force.y += Math.sin(body.angle) * body.mass * 0.0001;
             body.force.x += Math.cos(body.angle) * body.mass * 0.0001;
-	    Body.setAngularVelocity(body, 0.005);
+	    Body.setAngularVelocity(body, 0.01);
         }
     }
 });
+
+
+Events.on(render, 'afterRender', function() {
+    /* This adds an easier to see velocity indicator for debugging */
+    var context = render.context, options = render.options;
+    if (options.hasBounds) {
+      Render.startViewTransform(render);      
+    }
+    var bodies = Composite.allBodies(engine.world);
+    context.beginPath();
+    for (var i = 0; i < bodies.length; i++) {
+	var body = bodies[i];
+	if (!body.render.visible) continue;
+
+        if (body.label == 'hull') {
+	     var velocity = Body.getVelocity(body);
+	     context.moveTo(body.position.x, body.position.y);
+	     context.setLineDash([1, 1]);
+	     context.lineTo(body.position.x + velocity.x * 10, body.position.y + velocity.y * 10);
+	}
+    }
+    context.lineWidth = 5;
+    context.strokeStyle = 'cornflowerblue';
+    context.stroke();
+    if (options.hasBounds) {
+      Render.endViewTransform(render);      
+    }
+});
+
 
 const slider = document.getElementById("angle");
 
