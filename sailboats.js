@@ -7,12 +7,15 @@ var Bodies = Matter.Bodies,
     Render = Matter.Render,
     Runner = Matter.Runner;
 
+const windDirectionSlider = document.getElementById("wind_direction");
+const windSpeedSlider = document.getElementById("wind_speed");
+
 /***
 Returns the current wind velocity and direction at a location as a
 array of velocity, direction in degrees, where 0 is vertical from the north.
 */
 function windVelocity(x, y) {
-    return [1.5, 0.0 / Math.PI];
+    return [windSpeedSlider.value / 10.0, windDirectionSlider.value / 360 * 2.0 * Math.PI];
 }
 
 function containerPolygon(x, y, sides, radius) {
@@ -213,6 +216,19 @@ Render.lookAt(render, {
     }
 });
 
+function generateWindPoints(render, count) {
+    var points = []
+    for (var i = 0; i < count; ++i) {
+        points.push({
+            x: render.bounds.min.x + Math.random() * (render.bounds.max.x - render.bounds.min.x),
+            y: render.bounds.min.y + Math.random() * (render.bounds.max.y - render.bounds.min.y),
+        });
+    }
+    return points;
+}
+
+var windDots = generateWindPoints(render, 1000);
+
 Events.on(engine, 'beforeUpdate', function() {
     var bodies = Composite.allBodies(engine.world);
     for (var i = 0; i < bodies.length; i++) {
@@ -256,6 +272,34 @@ Events.on(render, 'afterRender', function() {
     context.lineWidth = 5;
     context.strokeStyle = 'cornflowerblue';
     context.stroke();
+
+    /* draw the wind */
+    var canvas = render.canvas;
+    for (var i = 0; i < windDots.length; ++i) {
+        var [velocity, direction] = windVelocity(windDots[i].x, windDots[i].y);
+	var dx = Math.cos(direction) * velocity;
+	var dy = Math.sin(direction) * velocity;
+        context.moveTo(windDots[i].x, windDots[i].y);
+        context.lineTo(windDots[i].x + 10 * dx, windDots[i].y + 10 * dy); 
+	windDots[i].x += dx;
+	windDots[i].y += dy;
+	if (windDots[i].x < render.bounds.min.x) {
+	  windDots[i].x = render.bounds.max.x;
+	}
+	if (windDots[i].x > render.bounds.max.x) {
+	  windDots[i].x = render.bounds.min.x;
+	}
+	if (windDots[i].y < render.bounds.min.y) {
+	  windDots[i].y = render.bounds.max.y;
+	}
+	if (windDots[i].y > render.bounds.max.y) {
+	  windDots[i].y = render.bounds.min.y;
+	}
+    }
+    context.lineWidth = 1;
+    context.strokeStyle = 'lightblue';
+    context.stroke();
+    
     if (options.hasBounds) {
       Render.endViewTransform(render);      
     }
