@@ -5,7 +5,10 @@ var Bodies = Matter.Bodies,
     Engine = Matter.Engine,
     Events = Matter.Events,
     Render = Matter.Render,
-    Runner = Matter.Runner;
+    Runner = Matter.Runner,
+    Vector = Matter.Vector;
+
+const keelFriction = 0.999;
 
 const windDirectionSlider = document.getElementById("wind_direction");
 const windSpeedSlider = document.getElementById("wind_speed");
@@ -200,7 +203,6 @@ Matter.Body.setVelocity(boats[0].bodies[0], {
     x: 5,
     y: 2
 });
-Matter.Body.setAngularVelocity(boats[0].bodies[0], Math.PI / 20);
 var circle = Bodies.circle(1232, 1800, 10);
 
 Composite.add(engine.world, [field, circle]);
@@ -229,7 +231,7 @@ function generateWindPoints(render, count) {
 
 var windDots = generateWindPoints(render, 1000);
 
-Events.on(engine, 'beforeUpdate', function() {
+Events.on(engine, 'beforeUpdate', function(event) {
     var bodies = Composite.allBodies(engine.world);
     for (var i = 0; i < bodies.length; i++) {
         var body = bodies[i];
@@ -237,14 +239,19 @@ Events.on(engine, 'beforeUpdate', function() {
         if (body.label == 'boom') {
             var [velocity, direction] = windVelocity(body.x, body.y);
             var angdiff = body.angle - direction;
-//            console.log('body ', i, ' direction', direction, ' angle ', body.angle, ' angdif ', angdiff, ' cos ', Math.cos(angdiff));
-            body.force.y += Math.sin(angdiff) * body.mass * 0.001;
-            body.force.x += Math.cos(angdiff) * body.mass * 0.001;
+            //            console.log('body ', i, ' direction', direction, ' angle ', body.angle, ' angdif ', angdiff, ' cos ', Math.cos(angdiff));
+            //            body.force.y += Math.sin(angdiff) * body.mass * 0.001;
+            //            body.force.x += Math.cos(angdiff) * body.mass * 0.001;
         }
         if (body.label == 'hull') {
-            body.force.y += Math.sin(body.angle) * body.mass * 0.0001;
+            // This is a bogus propuslive force just for testing.
             body.force.x += Math.cos(body.angle) * body.mass * 0.0001;
-	    Body.setAngularVelocity(body, 0.01);
+            body.force.y += Math.sin(body.angle) * body.mass * 0.0001;
+            // Subtract off most of the force perpindicular to the body
+            // orientation. (This is the keel effect.)
+            var rotatedForce = Vector.rotate(body.force, -body.angle);
+            rotatedForce.y *= (1 - keelFriction);
+            Vector.rotate(rotatedForce, body.angle, body.force);
         }
     }
 });
@@ -252,22 +259,22 @@ Events.on(engine, 'beforeUpdate', function() {
 
 Events.on(render, 'afterRender', function() {
     /* This adds an easier to see velocity indicator for debugging */
-    var context = render.context, options = render.options;
+    var context = render.context,
+        options = render.options;
     if (options.hasBounds) {
-      Render.startViewTransform(render);      
+        Render.startViewTransform(render);
     }
     var bodies = Composite.allBodies(engine.world);
     context.beginPath();
     for (var i = 0; i < bodies.length; i++) {
-	var body = bodies[i];
-	if (!body.render.visible) continue;
-
+        var body = bodies[i];
+        if (!body.render.visible) continue;
         if (body.label == 'hull') {
-	     var velocity = Body.getVelocity(body);
-	     context.moveTo(body.position.x, body.position.y);
-	     context.setLineDash([1, 1]);
-	     context.lineTo(body.position.x + velocity.x * 10, body.position.y + velocity.y * 10);
-	}
+            var velocity = Body.getVelocity(body);
+            context.moveTo(body.position.x, body.position.y);
+            context.setLineDash([1, 1]);
+            context.lineTo(body.position.x + body.velocity.x * 10, body.position.y + body.velocity.y * 10);
+        }
     }
     context.lineWidth = 5;
     context.strokeStyle = 'cornflowerblue';
@@ -277,31 +284,31 @@ Events.on(render, 'afterRender', function() {
     var canvas = render.canvas;
     for (var i = 0; i < windDots.length; ++i) {
         var [velocity, direction] = windVelocity(windDots[i].x, windDots[i].y);
-	var dx = Math.cos(direction) * velocity;
-	var dy = Math.sin(direction) * velocity;
+        var dx = Math.cos(direction) * velocity;
+        var dy = Math.sin(direction) * velocity;
         context.moveTo(windDots[i].x, windDots[i].y);
-        context.lineTo(windDots[i].x + 10 * dx, windDots[i].y + 10 * dy); 
-	windDots[i].x += dx;
-	windDots[i].y += dy;
-	if (windDots[i].x < render.bounds.min.x) {
-	  windDots[i].x = render.bounds.max.x;
-	}
-	if (windDots[i].x > render.bounds.max.x) {
-	  windDots[i].x = render.bounds.min.x;
-	}
-	if (windDots[i].y < render.bounds.min.y) {
-	  windDots[i].y = render.bounds.max.y;
-	}
-	if (windDots[i].y > render.bounds.max.y) {
-	  windDots[i].y = render.bounds.min.y;
-	}
+        context.lineTo(windDots[i].x + 10 * dx, windDots[i].y + 10 * dy);
+        windDots[i].x += dx;
+        windDots[i].y += dy;
+        if (windDots[i].x < render.bounds.min.x) {
+            windDots[i].x = render.bounds.max.x;
+        }
+        if (windDots[i].x > render.bounds.max.x) {
+            windDots[i].x = render.bounds.min.x;
+        }
+        if (windDots[i].y < render.bounds.min.y) {
+            windDots[i].y = render.bounds.max.y;
+        }
+        if (windDots[i].y > render.bounds.max.y) {
+            windDots[i].y = render.bounds.min.y;
+        }
     }
     context.lineWidth = 1;
     context.strokeStyle = 'lightblue';
     context.stroke();
-    
+
     if (options.hasBounds) {
-      Render.endViewTransform(render);      
+        Render.endViewTransform(render);
     }
 });
 
@@ -314,7 +321,7 @@ slider.addEventListener("input", function() {
         var body = bodies[i];
         if (body.isStatic || body.isSleeping) continue;
         if (body.label == 'boom') {
-	    Body.setAngle(body, this.value / 360.0 * 2 * Math.PI, false);
+            Body.setAngle(body, this.value / 360.0 * 2 * Math.PI, false);
             Body.setAngularVelocity(body, 0);
         }
     }
