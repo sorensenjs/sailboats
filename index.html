@@ -1,71 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Boats</title>
-  <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.js"></script>
+  <title>Matter Boats</title>
+  <script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
 </head>
 <body>
+  Boom angle (forced) <input type="range" id="angle" min="0" max="360" value="0">
+  Wind direction <input type="range" id="wind_direction" min="0" max="360" value="0">
+  Wind speed <input type="range" id="wind_speed" min="0" max="300" value="15">
+  <script src="sailboats.js"></script>
 </body>
-  
-<script type="text/javascript">
-
-SVG.Boat= class extends SVG.G {
-  constructor(color, x, y, angle) {
-    super(x, y);
-    var group = this.group()
-    this._hull = group.path("M 0,-40 C 20,-20 20,20 20,40 L -20,40 C -20,30 -20,-20 0,-40")
-        .stroke({color: 'black', width: 3, linecap: 'round', linejoin: 'round'})
-        .fill(color);
-    this._sail = group.path("M 0,0 Q 20,-20 40,0 Q 20,-5 0,0")
-        .fill({color: 'lightgray', opacity: 0.75})
-        .stroke({color: 'black', width: 1});
-    this._boat = group;
-    this._heading = 0;
-    this._x = x;
-    this._y = y;
-    this._hull.transform({rotate:angle, translateX: x, translateY: y}, false);
-    this._sail.transform({rotate:angle, translateX: x, translateY: y, ox: 0, oy: 0}, false);
-    console.log('cx cy ', this.cx(), this.cy());
-  }
-
-  center(x,y) {
-    var angle = Math.atan2(y - this._y, x - this._x) * 180.0 / Math.PI + 90;
-    this._hull.transform({rotate:angle, translateX: x, translateY: y}, false);
-    this._sail.transform({rotate:angle, translateX: x, translateY: y, ox: 0, oy: 0}, false);
-    this._x = x;
-    this._y = y;
-  }
-}
-
-SVG.extend(SVG.Container,  {
-  boat: function(color, x, y, angle) {
-    return this.put(new SVG.Boat(color, x, y, angle))
-  }
-})
-
-var draw = SVG().addTo('body').size(1200, 1200);
-var course = draw.circle(1200, 1200).fill('white').stroke({width:2, color:'black'});
-
-var boat1 = draw.boat('lightblue', 100, 100, 90);
-var boat2 = draw.boat('lightgreen', 200, 120, 110);
-
-var boata = draw.boat('red', 100, 600, 0);
-var boatb = draw.boat('red', 200, 600, 45);
-var boatc = draw.boat('red', 300, 600, 90);
-var boatd = draw.boat('red', 400, 600, 180);
-
-var course1 = draw.path("m 250,500 C 150,500 200,500 400,200");
-course1.fill('none').stroke({width:1, color: 'blue'})
-
-var course2 = draw.path("m 300,180 C 350,150 500,200 600,330");
-course2.fill('none').stroke({width:1, color: 'green'})
-
-draw.animate(8000, '<>').during(function( eased){
-    var p = course1.pointAt(eased * course1.length());
-    boat1.center(p.x, p.y);
-    var q = course2.pointAt(eased * course2.length());
-    boat2.center(q.x, q.y);
-}).loop(true)
-
-</script>
 </html>
