@@ -187,7 +187,10 @@ var render = Render.create({
     }
 });
 
-var field = containerPolygon(1020, 1020, 40, 1000);
+const fieldCenter = { x: 1020, y: 1020 };
+const fieldRadius = 1000;
+
+var field = containerPolygon(fieldCenter.x, fieldCenter.y, 40, fieldRadius);
 
 var boats = [
     createBoat(1400, 1180),
@@ -199,13 +202,13 @@ var boats = [
 ];
 
 Composite.add(engine.world, boats);
-Matter.Body.setVelocity(boats[0].bodies[0], {
-    x: 5,
-    y: 2
-});
-var circle = Bodies.circle(1232, 1800, 10);
 
-Composite.add(engine.world, [field, circle]);
+var windwardMark = Bodies.circle(fieldCenter.x, 270, 15, {
+    render: { fillStyle: 'orange' }});
+var leewardMark = Bodies.circle(fieldCenter.x, fieldCenter.y + fieldRadius - 270, 15, {
+    render: { fillStyle: 'orange' }});
+
+Composite.add(engine.world, [field, leewardMark, windwardMark]);
 
 Render.lookAt(render, {
     min: {
@@ -264,21 +267,6 @@ Events.on(render, 'afterRender', function() {
     if (options.hasBounds) {
         Render.startViewTransform(render);
     }
-    var bodies = Composite.allBodies(engine.world);
-    context.beginPath();
-    for (var i = 0; i < bodies.length; i++) {
-        var body = bodies[i];
-        if (!body.render.visible) continue;
-        if (body.label == 'hull') {
-            var velocity = Body.getVelocity(body);
-            context.moveTo(body.position.x, body.position.y);
-            context.setLineDash([1, 1]);
-            context.lineTo(body.position.x + body.velocity.x * 10, body.position.y + body.velocity.y * 10);
-        }
-    }
-    context.lineWidth = 5;
-    context.strokeStyle = 'cornflowerblue';
-    context.stroke();
 
     /* draw the wind */
     var canvas = render.canvas;
