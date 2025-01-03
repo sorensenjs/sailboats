@@ -8,7 +8,7 @@ var Bodies = Matter.Bodies,
     Runner = Matter.Runner,
     Vector = Matter.Vector;
 
-const keelFriction = 0.999;
+const keelFriction = 0.8;
 
 const windDirectionSlider = document.getElementById("wind_direction");
 const windSpeedSlider = document.getElementById("wind_speed");
@@ -208,7 +208,24 @@ var windwardMark = Bodies.circle(fieldCenter.x, 270, 15, {
 var leewardMark = Bodies.circle(fieldCenter.x, fieldCenter.y + fieldRadius - 270, 15, {
     render: { fillStyle: 'orange' }});
 
-Composite.add(engine.world, [field, leewardMark, windwardMark]);
+var windwardAnchor = Constraint.create({
+        pointA: {
+            x: fieldCenter.x,
+            y: 270
+        },
+        bodyB: windwardMark,
+        stiffness: 0.001,
+    });
+var leewardAnchor = Constraint.create({
+        pointA: {
+            x: fieldCenter.x,
+            y: fieldCenter.y + fieldRadius - 270,
+        },
+        bodyB: leewardMark,
+        stiffness: 0.001,
+    });
+
+Composite.add(engine.world, [field, leewardMark, windwardMark, windwardAnchor, leewardAnchor]);
 
 Render.lookAt(render, {
     min: {
@@ -216,8 +233,8 @@ Render.lookAt(render, {
         y: 0
     },
     max: {
-        x: 8000,
-        y: 8000
+        x: 6000,
+        y: 6000
     }
 });
 
@@ -241,15 +258,16 @@ Events.on(engine, 'beforeUpdate', function(event) {
         if (body.isStatic || body.isSleeping) continue;
         if (body.label == 'boom') {
             var [velocity, direction] = windVelocity(body.x, body.y);
+            var windVx = velocity * Math.cos(direction);
+            var WindVy = velocity * Math.sin(direction);
             var angdiff = body.angle - direction;
             //            console.log('body ', i, ' direction', direction, ' angle ', body.angle, ' angdif ', angdiff, ' cos ', Math.cos(angdiff));
-            //            body.force.y += Math.sin(angdiff) * body.mass * 0.001;
-            //            body.force.x += Math.cos(angdiff) * body.mass * 0.001;
         }
         if (body.label == 'hull') {
-            // This is a bogus propuslive force just for testing.
-            body.force.x += Math.cos(body.angle) * body.mass * 0.0001;
-            body.force.y += Math.sin(body.angle) * body.mass * 0.0001;
+            // Minor force of wind directionly on the holl of the boat.
+            var [velocity, direction] = windVelocity(body.x, body.y);
+            body.force.x += velocity * Math.cos(direction) * body.mass * 0.00001;
+            body.force.y += velocity * Math.sin(direction) * body.mass * 0.00001;
             // Subtract off most of the force perpindicular to the body
             // orientation. (This is the keel effect.)
             var rotatedForce = Vector.rotate(body.force, -body.angle);
