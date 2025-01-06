@@ -29,7 +29,10 @@ function containerPolygon(x, y, sides, radius) {
     const parts = [];
     for (let i = 0; i < sides; i++) {
         const body = Bodies.rectangle(0, 0, sideLength, width, {
-            isStatic: true
+            isStatic: true,
+            render: {
+              fillStyle: 'lightgrey'
+            }
         });
         Body.rotate(body, i * theta);
         Body.translate(body, {
@@ -252,27 +255,28 @@ function generateWindPoints(render, count) {
 var windDots = generateWindPoints(render, 1000);
 
 Events.on(engine, 'beforeUpdate', function(event) {
-    var bodies = Composite.allBodies(engine.world);
-    for (var i = 0; i < bodies.length; i++) {
-        var body = bodies[i];
-        if (body.isStatic || body.isSleeping) continue;
-        if (body.label == 'boom') {
-            var [velocity, direction] = windVelocity(body.x, body.y);
+    var composites = Composite.allComposites(engine.world);
+    for (var i = 0; i < composites.length; i++) {
+        var composite = composites[i];
+        if (composite.label == 'boat') {
+            var hull = composite.bodies[0];
+            var boom = composite.bodies[1];
+            if (hull.isSleeping) continue;
+
+            var [velocity, direction] = windVelocity(hull.x, hull.y);
             var windVx = velocity * Math.cos(direction);
             var WindVy = velocity * Math.sin(direction);
-            var angdiff = body.angle - direction;
             //            console.log('body ', i, ' direction', direction, ' angle ', body.angle, ' angdif ', angdiff, ' cos ', Math.cos(angdiff));
-        }
-        if (body.label == 'hull') {
+
             // Minor force of wind directionly on the holl of the boat.
-            var [velocity, direction] = windVelocity(body.x, body.y);
-            body.force.x += velocity * Math.cos(direction) * body.mass * 0.00001;
-            body.force.y += velocity * Math.sin(direction) * body.mass * 0.00001;
+            var [velocity, direction] = windVelocity(hull.x, hull.y);
+            hull.force.x += velocity * Math.cos(direction) * hull.mass * 0.00001;
+            hull.force.y += velocity * Math.sin(direction) * hull.mass * 0.00001;
             // Subtract off most of the force perpindicular to the body
             // orientation. (This is the keel effect.)
-            var rotatedForce = Vector.rotate(body.force, -body.angle);
+            var rotatedForce = Vector.rotate(hull.force, -hull.angle);
             rotatedForce.y *= (1 - keelFriction);
-            Vector.rotate(rotatedForce, body.angle, body.force);
+            Vector.rotate(rotatedForce, hull.angle, hull.force);
         }
     }
 });
